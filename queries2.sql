@@ -1,4 +1,4 @@
--- ### Задание 1. Карты некоторого типа
+-- ### Задание 1. Устройства некоторого типа
 select * from devices where type_id = 2;
 
 
@@ -21,80 +21,65 @@ select * from devices d, devices d2;
 
 -- ### Задание 5
 
--- 5.1) Датчики со скидкой больше 10
-select * from datchiki where id in (
-    select c.datchik_id from ceny c
-        left join datchiki_promo dp on c.datchik_id = dp.datchik_id
-        left join promo p on dp.promo_id = p.id
-    where skidka > 10
+-- 5.1) Устройства для которых есть заказы
+select * from devices where id in (
+    select oi.device_id from orders o
+        left join order_items oi on o.id = oi.order_id
     );
 
--- 5.2) Датчики для которых предусмотрены акционые предложения
-select * from datchiki d where exists (
-    select * from ceny c
-        left join datchiki_promo dp on c.datchik_id = dp.datchik_id
-        left join promo p on dp.promo_id = p.id
-    where d.id = dp.datchik_id
+-- 5.2) Устройства для которых существует отменённый заказ
+select * from devices d where exists (
+    select oi.device_id from orders o
+        left join order_items oi on o.id = oi.order_id
+    where d.id = oi.device_id and o.status = 8
     );
 
--- 5.3) Датчики цена которых меньше цены всех датчиков со скидкой больше 10
-select * from datchiki d
-    left join ceny c on d.id = c.datchik_id
-where c.cena < ALL (
-    select c2.cena from datchiki d2
-        left join ceny c2 on c2.datchik_id = d2.id
-        left join datchiki_promo dp on d2.id = dp.datchik_id
-        left join promo p on dp.promo_id = p.id
-    where p.skidka > 10
+-- 5.3) Устройства цена которых меньше всех устройств в полученных заказах
+select * from devices d where cost < all (
+    select cost from devices d2
+        left join order_items oi on d2.id = oi.device_id
+        left join orders o on o.id = oi.order_id
+    where o.status = 7
 );
 
--- 5.4) Датчики цена которых больше любого датчика со скидкой больше 10
-select * from datchiki d
-    left join ceny c on d.id = c.datchik_id
-where c.cena > ANY (
-    select c2.cena from datchiki d2
-        left join ceny c2 on c2.datchik_id = d2.id
-        left join datchiki_promo dp on d2.id = dp.datchik_id
-        left join promo p on dp.promo_id = p.id
-    where p.skidka > 10
+-- 5.4) Устройства цена которых больше любого устройства в полученных заказах
+select * from devices d where cost > any (
+    select cost from devices d2
+        left join order_items oi on d2.id = oi.device_id
+        left join orders o on o.id = oi.order_id
+    where o.status = 7
 );
 
--- 5.5) Производители для которых есть датчики со скидкой
+-- 5.5) Устройства для которых существует отменённый заказ
+select * from devices d where exists (
+    select oi.device_id from orders o
+        left join order_items oi on o.id = oi.order_id
+    where d.id = oi.device_id and o.status = 8
+    );
 
-select * from proizvoditel p
-    where exists (
-        select * from datchiki d
-            inner join datchiki_promo dp on dp.datchik_id = d.id
-            left join promo pr on pr.id = dp.promo_id
-        where p.id = d.proizv_id
+-- 5.6) Устройства для которых есть врзвращённые заказы
+select * from devices where id in (
+    select oi.device_id from orders o
+        left join order_items oi on o.id = oi.order_id
+    where o.status = 10
+    );
+
+-- 5.7) Устройства, которые стоят не более 40
+
+select * from devices d
+    where 40 >= all (
+        select cost from devices d2
+            left join types t on d2.type_id = t.id
+        where d.type_id = d2.type_id
         );
 
--- 5.6) Производители для которых есть датчики со скидкой
+-- 5.8) Типы устройств для которых есть устройства ценой не более 40
 
-select * from proizvoditel p
-    where id in (
-        select d.id from datchiki d
-            inner join datchiki_promo dp on dp.datchik_id = d.id
-            left join promo pr on pr.id = dp.promo_id
-        where p.id = d.proizv_id
-        );
-
--- 5.7) Производители для которых датчики стоят не более 4000
-
-select * from proizvoditel p
-    where 4000 >= all (
-        select cena from ceny c
-            inner join datchiki d on d.id = c.datchik_id
-        where d.proizv_id = p.id
-        );
-
--- 5.8) Производители для которых есть датчики ценой не более 4000
-
-select * from proizvoditel p
-    where 4000 >= any (
-        select cena from ceny c
-            inner join datchiki d on d.id = c.datchik_id
-        where d.proizv_id = p.id
+select * from types t
+    where 40 >= any (
+        select cost from devices d
+            inner join types t2 on d.type_id = t2.id
+        where t.id = t2.id
         );
 
 
