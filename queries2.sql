@@ -180,3 +180,16 @@ begin
     end if;
 end; //
 delimiter ;
+
+
+-- ### Задание 15 Индекс
+
+create index devices_type_id_index
+	on devices (type_id);
+
+-- ### Задание 16 Внешний ключ
+
+alter table orders
+	add constraint orders_statuses_id_fk
+		foreign key (status) references statuses (id)
+			on update cascade;
